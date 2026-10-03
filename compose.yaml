@@ -1,0 +1,38 @@
+# Netatalk AFP file server for Mac OS 9 clients, as a TrueNAS custom app
+# TrueNAS: Apps > Discover Apps > Install via YAML
+# Name the app "netatalk" and paste this whole file.
+#
+# Before installing:
+#   1. Create a dataset for the share, e.g. Datasets > Add Dataset > "macshare"
+#      (preset: Apps or Generic). Replace POOL below with your pool name.
+#   2. Set AFP_USER and AFP_PASS. Keeping the password to 8 characters or fewer
+#      is the safest bet with older AppleShare clients.
+#
+# On the Mac: Chooser > AppleShare > Server IP Address... > your TrueNAS IP
+# Log in as AFP_USER / AFP_PASS and choose "iMac Share".
+
+services:
+  netatalk:
+    image: netatalk/netatalk:latest
+    container_name: netatalk
+    restart: unless-stopped
+    ports:
+      - "548:548"            # AFP over TCP (the only port Mac OS 9 needs)
+    volumes:
+      - /mnt/POOL/macshare:/mnt/afpshare
+    environment:
+      AFP_USER: chris
+      AFP_PASS: "change-me"
+      AFP_GROUP: afpusers
+      # Match TrueNAS's built-in "apps" user/group so files on the dataset
+      # are readable from SMB/NFS and other apps.
+      AFP_UID: "568"
+      AFP_GID: "568"
+      # Mac OS 9's AppleShare client (3.8.x) supports DHCAST128 ("DHX"),
+      # not the default DHX2/SRP. Keep DHX2 for modern Macs.
+      AFP_UAMS: "uams_dhx.so uams_dhx2.so"
+      SERVER_NAME: "TrueNAS"
+      SHARE_NAME: "iMac Share"
+      AFP_MAC_CHARSET: "MAC_ROMAN"
+      DISABLE_TIMEMACHINE: "1"
+      TZ: "America/Chicago"
